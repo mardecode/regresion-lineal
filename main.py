@@ -1,8 +1,7 @@
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
-
-plt.ion()
+from mpl_toolkits.mplot3d import Axes3D
 
 
 
@@ -10,14 +9,45 @@ plt.ion()
 x = []
 y = []
 h=[]
-n= 2 # numero de dimensiones
-thetas  = np.random.rand(n)
+n=0 # numero de dimensiones
+countDatos = 0
+#leyendo archivo *********************************************************
+with open('datos4.csv', 'rb') as csvfile:
+    datos = csv.reader(csvfile, delimiter=',')
+    #global n
+    for row in datos:
+        n =len(row)
+
+        xTemporal = []
+        xTemporal.append(1)
+        for i in range (0,len(row)-1):
+            xTemporal.append(float(row[i]))
+            #x.append([1,float(row[i])])
+        x.append(xTemporal)
+        y.append(float(row[len(row)-1]))
+        countDatos += 1
+
+x = np.array(x)
+y = np.array(y)
+
+yMax = np.amax(y)
+yMin = np.min(y)
+
+xMax = np.amax(x[:,1])
+xMin = np.min(x[:,1])
+if n>= 3:
+    x2Max = np.amax(x[:,2])
+    x2Min = np.min(x[:,2])
+# fin leer archivo **********************************************************
+
+
 #thetas = [-4,1]
+thetas  = np.random.rand(n)
 print "thetas aleatorios " ,thetas
 alpha = np.ones(n)
 error = []
 errorF = 0
-countDatos = 0
+
 dNormal = []
 dTemporal = []
 
@@ -86,18 +116,6 @@ def getErrorF():
 
 
 
-#leyendo archivo *********************************************************
-with open('datos4.csv', 'rb') as csvfile:
-    datos = csv.reader(csvfile, delimiter=',')
-    for row in datos:
-#        for i in len(row):
-            x.append([1,float(row[0])])
-        y.append(float(row[1]))
-        countDatos += 1
-
-x = np.array(x)
-y = np.array(y)
-# fin leer archivo **********************************************************
 
 ### ALGORITMO ####
 getH()
@@ -106,6 +124,11 @@ getDerivadas(1)
 getDerivadas(0)
 plox = 0
 print "d Temp ",dTemporal, "promedio: ", promedio(dNormal)
+
+plt.ion()
+fig = plt.figure()
+
+
 while(promedio(dNormal) >= 0.01):
     print "***************************************************++"
     changeThetas()
@@ -115,14 +138,27 @@ while(promedio(dNormal) >= 0.01):
         break
     print "d Temp ",dNormal, "promedio: ", promedio(dNormal)
 
-    plt.scatter(x[:,1],y)
-    plt.axis([-120, 160, -40, 130])
-    plt.plot([-120,160],[thetas[0]+thetas[1]*-120 , thetas[0]+thetas[1]*160])
-    plt.savefig('fig'+str(plox))
+    if n==2:
+        plt.scatter(x[:,1],y)
+        plt.axis([xMin, xMax, yMin, yMax])
+        plt.plot([xMin,xMax],[thetas[0]+thetas[1]*xMin , thetas[0]+thetas[1]*xMax])
+        plt.savefig('fig'+str(plox))
+    elif n==3:
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_xlim3d(xMin,xMax)
+        ax.set_ylim3d(x2Min,x2Max)
+        ax.set_zlim3d(yMin,yMax)
+        ax.scatter(x[:,1],x[:,2],y)
+        ax.plot([xMin,xMax],[x2Min,x2Max],[thetas[0]+thetas[1]*xMin+thetas[2]*x2Min,thetas[0]+thetas[1]*xMax+thetas[2]*x2Max])
+        plt.draw()
+        #plt.pause()
+        #ax.cla()
     plt.pause(0.01)
 
-while True:
-    plt.pause(0.01)
+
+if(n==2):
+    while True:
+        plt.pause(0.01)
 
 '''
 #funcion hallar h(x) = theta[0] + theta[1]*x
@@ -169,7 +205,7 @@ while err > 0.4:
     print "error ", err
     asdf += 1
     plt.scatter(x[:,1],y)
-    plt.axis([-120, 160, -40, 130])
+    plt.axis([x, 160, -40, 130])
     plt.plot([-120,160],[thetas[0]+thetas[1]*-120 , thetas[0]+thetas[1]*160])
 
     plt.pause(0.01)
